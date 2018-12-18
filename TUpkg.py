@@ -146,6 +146,7 @@ def Send_tupkg(): #THIS FUNCTION IS CALLED AT THE TAG CHANGE EVENT OF Path/Compl
 	t = shared.main.inTolerance
 	c = shared.main
 	ref = shared.TUpkg
+	rwr_id2 = str(system.tag.read('Path/TU/tu_fiberID').value) #added this because this keeps clearing out at TUpkg send event. 
 	#inTolerance parameters
 	num = 90 #90 degrees
 	toleranceVal = 15 #15 degrees tolerance
@@ -229,7 +230,7 @@ def Send_tupkg(): #THIS FUNCTION IS CALLED AT THE TAG CHANGE EVENT OF Path/Compl
 		postdata= "directive=" + 'tupkg' +';' 	
 		postdata+= 'mach_no=' + str(system.tag.read('Path/mach_no').value) 
 		postdata+= ';oper_id=' + str(system.tag.read('Path/current_operid').value).upper()			
-		postdata+= ';rwr_id=' + str(system.tag.read('Path/TU/tu_fiberID').value)#change to  
+		postdata+= ';rwr_id=' + rwr_id2#change to  
 		postdata+= ';rwr_serial_id=' + str(tu_serID)		
 		postdata+= ';mach_stop=' + str(system.tag.read('Path/stop_code').value)
 		postdata+= ';length_run='+str(system.tag.read('Path/TU/tu_length').value)
@@ -244,6 +245,7 @@ def Send_tupkg(): #THIS FUNCTION IS CALLED AT THE TAG CHANGE EVENT OF Path/Compl
 		shared.main.log(response)
 		responsesp = response.split(":") #example :770:231:COMP:TU:JRFSF3959D2CLJ:0:RACK:PAYOUT:41:SALE:0:::NONE:
 		if responsesp[5] == 0:
+			time.sleep(1)
 			ref.Reset()
 			system.tag.write('Path/instruction','TU spool completed, place it on the RACK')
 		else:
@@ -251,7 +253,6 @@ def Send_tupkg(): #THIS FUNCTION IS CALLED AT THE TAG CHANGE EVENT OF Path/Compl
 			
 		shared.main.log('TUpkg data = ' + tu_pkg)
 		ref.tu_pkg = tu_pkg
-		
 		
 	except:
 		shared.main.log('Tupkg exception: ' + traceback.format_exc())
