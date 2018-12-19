@@ -95,9 +95,11 @@ def CompleteTU():
 		#check to see if the spool is already completed. 
 		#this is to avoid freeze on the sequence/handshaking when a "complete" button is already pressed on nextrom HMI 
 		#error2 checks with the error given from PTS  = give nextrom the NEXT tu signal	
-		error2 = str(system.tag.read('Path/TU/tu_fiberID').value) + ' has already been used in rew_fiber. :'
+		error2 = str(system.tag.read('Path/TU/tu_fiberID').value) + ' has already been used in rew_fiber. :' #added 12/19/2018
+
 		
-		if responsesp[5] == '0':#or response[6] == error2:
+		
+		if responsesp[5] == '0'or response[6] == error2:
 			system.tag.write('Path/TU/NextTU','true')
 			system.tag.write('Path/TU/Next_TU_LCU','true')
 			system.tag.write('Path/TU/prevent_newtu','false')
