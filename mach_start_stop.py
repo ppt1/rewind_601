@@ -7,6 +7,7 @@ import time
 
 
 def mach_start(): #machine start
+#this function is called in db.py line 69
 	svc = 'rewind_aux/rewind_aux.svc/process?inString='
 
 	
@@ -55,7 +56,8 @@ def mach_stop():
 	data+= ';mach_no=' + str(shared.main.mach_no.value)
 	data+= ';oper_id=' + str(system.tag.read('Path/current_operid').value)
 	
-	#if tapingDone == True:
+	#system.tag.write('Path/mach_start_after_taping',0) at stop at CompleteTU Event
+
 	sendstring1 = shared.main.PTS_URL + svc + data
 	print sendstring1 
 	shared.main.log(sendstring1)

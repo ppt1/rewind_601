@@ -45,8 +45,9 @@ def SetupTU():
 		
 		postdata = 'mach_no=' + str(mach_no.value)
 		postdata += ':oper_id=' + str(oper_id.value).upper() 
-		if system.tag.read('Path/TU/tu_plan_area').value=='SCRP':
+		if system.tag.read('Path/TU/tu_plan_area').value=='SCRP' or system.tag.read('Path/TU/tu_send_area').value == 'SCRP':
 			rwr_id = 'RWRSCRAP'
+			system.tag.write('Path/TU/tu_fiberID','RWRSCRAP')
 			#system.tag.write('Path/TU/nextID','')#reset next TU ID
 			
 		#elif system.tag.read('Path/nextDrawID').value == 'SCRP':
@@ -152,7 +153,10 @@ def SetupTU():
 			shared.main.log(traceback.format_exc())
 			
 			#"601:JAM:COMP:TU:JRFSF6614A1CLJ:0:RACK:PAYOUT:10:SCRP:0:::NONE:"
-
+		
+		#RESET  tu spool_send area
+		system.tag.write('Path/TU/tu_send_area',"")
+		system.tag.write('Path/TU/tu_plan_area',"")
 	else:
 		system.tag.write('Path/instruction','Previous spool has to be completed to continue')
 		shared.main.log('Previous spool has to be completed to continue')	
