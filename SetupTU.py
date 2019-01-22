@@ -1,4 +1,9 @@
+#change log 
 
+
+#1.22.18 error handling for cannot use regular id, enter rwrscrap
+
+####################################################################################################
 #Setup TU 
 #this is followed after oper_logon, state
 import system
@@ -45,7 +50,7 @@ def SetupTU():
 		
 		postdata = 'mach_no=' + str(mach_no.value)
 		postdata += ':oper_id=' + str(oper_id.value).upper() 
-		if system.tag.read('Path/TU/tu_plan_area').value=='SCRP' or system.tag.read('Path/TU/tu_send_area').value == 'SCRP':
+		if system.tag.read('Path/TU/tu_plan_area').value=='SCRP':#or system.tag.read('Path/TU/tu_send_area').value == 'SCRP':
 			rwr_id = 'RWRSCRAP'
 			system.tag.write('Path/TU/tu_fiberID','RWRSCRAP')
 			#system.tag.write('Path/TU/nextID','')#reset next TU ID
@@ -82,7 +87,7 @@ def SetupTU():
 			shared.main.log(response1)
 			response1sp = response1.split(':')
 		
-			
+			#"601:JAM:COMP:TU:JRFSF6614A1CLJ:0:RACK:PAYOUT:10:SCRP:0:::NONE:"
 			
 			if response1sp[5]=='0': #response is GOOD 	
 				
@@ -139,14 +144,28 @@ def SetupTU():
 				system.tag.write('Path/nextDrawID',"")
 				system.tag.write('Path/TU/tu_serID_PTS',tu_serID)
 				system.tag.write('Path/TU/prevent_newtu','true')
+
+
+				#RESET  tu spool_send area
+			system.tag.write('Path/TU/tu_send_area',"")
+			system.tag.write('Path/TU/tu_plan_area',"")
+
 			else:
 				system.tag.write('Path/instruction', 'Takeup Spool Rejected. '  + response1sp[6]) 
 				shared.main.log('Takeup Spool is Rejected. ' + response1sp[6])
+
+				#error handling for cannot use regular id, enter rwrscrap #ppc 1.22.19
+
+				if response1sp[6] == "Cannot use regular RWR id. Enter RWRSCRAP. :":
+					system.tag.write('Path/tu_plan_area','SCRP')
+
+
 				system.tag.write('Path/TU/tu_spool_reject','true')
 				system.tag.write('Path/TU/previous_completed','true')#READY TO ACCEPT A NEW SPOOL SIGNAL 
 				time.sleep(1)
 				system.tag.write('Path/TU/tu_spool_reject','false')
 				shared.main.log(response1sp[6])
+
 				
 				
 		except:
@@ -154,9 +173,7 @@ def SetupTU():
 			
 			#"601:JAM:COMP:TU:JRFSF6614A1CLJ:0:RACK:PAYOUT:10:SCRP:0:::NONE:"
 		
-		#RESET  tu spool_send area
-		system.tag.write('Path/TU/tu_send_area',"")
-		system.tag.write('Path/TU/tu_plan_area',"")
+	
 	else:
 		system.tag.write('Path/instruction','Previous spool has to be completed to continue')
 		shared.main.log('Previous spool has to be completed to continue')	
