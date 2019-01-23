@@ -107,6 +107,7 @@ def func(select):
 				system.tag.write('Path/TU/tu_plan_area', '')
 				system.tag.write('Path/po_len_set', '')
 				system.tag.write('Path/po_serID_hidden', '')
+				system.tag.write('Path/TU/tu_plan_area','')
 				time.sleep(1)
 				system.tag.write('Path/po_removeID',0)
 

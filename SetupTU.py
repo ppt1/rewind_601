@@ -1,6 +1,6 @@
 #change log 
 
-#commit to master branch
+
 #1.22.18 error handling for cannot use regular id, enter rwrscrap
 
 ####################################################################################################
@@ -65,13 +65,14 @@ def SetupTU():
 		postdata+= ':rwr_serial_id=' + str(tu_serID)
 		postdata+= ':sfo_final_color=' + 'NONE'
 		postdata+= ':;spoolRun=' + 'Single'
-		
+		###############################################################
+		#SEND TO PTS
 		try:
 			sendstring1= shared._1_Oper_Logon.SendURL(shared.main.PTS_URL, Setupsvc, postdata)
 			print sendstring1
 			shared.main.log(sendstring1)
 			#RESET TU_PLAN_AREA from previous completeTU instruction. Example: if instruction from previous completeTU is "RWRSCRP", reset it as soon as takeup
-			system.tag.write('Path/TU/tu_plan_area',"")			
+						
 		except:
 			shared.main.log(traceback.print_exc('sendstring1'))
 			
@@ -79,7 +80,8 @@ def SetupTU():
 	
 		
 		### PARSE RESPONSE
-		
+		#######################################################################
+		#RESPONSE FROM PTS
 		try:
 			time.sleep(1)
 			response1 = system.net.httpGet(sendstring1)
@@ -104,9 +106,10 @@ def SetupTU():
 				system.tag.write('Path/TU/CutLenSet_pts', float(response1sp[13]))
 				system.tag.write("Path/po_len_set", float(response1sp[15]))
 				
-				
+				#MADE THE PT POINT TO 105 TO ENSURE IT STAYS ABOVE 100. PPC 8/1/18, set to 30 for scrap
+						
 				if response1sp[17] =='0':
-					pfsetpoint = 30 #MADE THE PT POINT TO 105 TO ENSURE IT STAYS ABOVE 100. PPC 8/1/18, set to 30 for scrap
+					pfsetpoint = 30 		
 				else:
 					pfsetpoint = float(response1sp[17])+5
 					
@@ -146,18 +149,23 @@ def SetupTU():
 				system.tag.write('Path/TU/prevent_newtu','true')
 
 
-				#RESET  tu spool_send area
-			system.tag.write('Path/TU/tu_send_area',"")
-			system.tag.write('Path/TU/tu_plan_area',"")
-
+				#RESET  tu spool_send area-only clear if the response back is 0
+				system.tag.write('Path/TU/tu_send_area',"")
+				system.tag.write('Path/TU/tu_plan_area',"")
+			
 			else:
+			#if plan_send instruction from PO setup gets cleared out, and rwrscrap instruction is to be made, 
+			#set the next spool for rwrscrap
+				if response1sp[6] == 'Cannot use regular RWR id. Enter RWRSCRAP.':
+					system.tag.write('Path/TU/tu_plan_area','SCRP')
+					system.tag.write('Path/TU/tu_fiberID','RWRSCRAP')
+				
+				
 				system.tag.write('Path/instruction', 'Takeup Spool Rejected. '  + response1sp[6]) 
 				shared.main.log('Takeup Spool is Rejected. ' + response1sp[6])
 
 				#error handling for cannot use regular id, enter rwrscrap #ppc 1.22.19
 
-				if response1sp[6] == "Cannot use regular RWR id. Enter RWRSCRAP. :":
-					system.tag.write('Path/tu_plan_area','SCRP')
 
 
 				system.tag.write('Path/TU/tu_spool_reject','true')
