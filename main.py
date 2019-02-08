@@ -40,9 +40,27 @@ filename = adir+"zlog-%d.%s.%s.txt"%(c.get(Calendar.YEAR),month,(day))
 print filename
 
 #######################################################
-	
-	#Function to display log on the root container 
-	
+#SEND EMAIL
+##################################################
+#ileName = filePath.split("\\")[-1]
+
+def Send_Email('temp'):
+
+	#fileData = fpmi.file.readFileAsBytes(filePath)
+	if temp == 'TU_Rejects':
+		subject = 'Multiple Takeup Spool Rejects' #reason code for the issue and send email for the take up spools rejected
+		body = subject + system.tag.read('Path/instruction').value
+
+	#if temp == ''
+
+	smtp = "mail.ofsoptics.com"
+	sender = "REW601@OFS"
+#	subject = 'User Input requested at 601'
+#	body = "Hello, this is a TEST email"
+	recipients = ["jheim@ofsoptics.com","pcharles@ofsoptics.com",'jmunz@ofsoptics.com']
+	system.net.sendEmail(smtp, sender, subject, body, 0, recipients)#, [fileName], [fileData])	
+#Function to display log on the root container 
+
 	#Function to log files on 
 	########################################################
 	
@@ -169,3 +187,22 @@ def ackDancer():
 		system.tag.write('Path/TU/Next_TU_LCU',0)
 		system.tag.write('Path/instruction', 'Dancer Fault acknowledged, ready for the Next TU spool')
 		shared.main.log('Dancer Fault acknowledged. Ready for the Next TU spool') 
+		
+def Fiber_Break():
+
+	shared.main.Stop_code()	
+	shared.CompleteTU.CompleteTU()
+	shared.TUpkg.Send_tupkg()
+	system.tag.write('Path/mach_start_after_taping',0)
+
+import threading 
+def SetupTU_timer():
+	print 'timer Done!'
+
+#arg1= time in ms
+#arg2 = function to execute when timer is done
+
+def startTimer(temp):
+	if temp == 'TU':
+		
+		threading.Timer(250, SetupTU_timer).start() #hello function will be executed after 4seconds

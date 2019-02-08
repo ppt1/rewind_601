@@ -1,52 +1,30 @@
-def Calibrate(): #check calibration
+#Complete TU 
+#triggered by "Complete" button by the PLC 
+#Corresponds to TVerifyTakeup Function on NETUTIL.bas 
 
-	svc= 'rewind_aux/rewind_aux.svc/process?inString='
-	tu_ten = round(system.tag.read('Path/fWindingTensionMe').value,2)
-	pf_ten = round(system.tag.read('Path/Calib/fProofTensionCalibCheckMe').value,2)
+#COMPLETE TU		
+#Example:  http://pts.ganor.ofsoptics.com/norcross/pts/rewind/svc/completeTU/completeTU.svc/process?inString=mach_no=770;oper_id=117;
+#po_id=JRFVY3889A1RVJ;po_serial_id=3800125904;rwr_id=RWR551295121;rwr_serial_id=5206475492;
+#plan_length=50550;actual_len=50551;accum_len=50555;tu_color=GR;tu_status=OK;stop_code=STCT;
+#mach_speed=1500;spoolRun=Single;I_PO_TEN=66.5:72.7:1.45:69.48;I_TU_TEN=45.4:55.3:1.83:49.78;
+#I_PF_TEN=106.1:114.7:1.82:109.75;SPEDGE=30.54:29.77:-0.49:175.56:176.35:0.39:;DEFECT=0:0;MISC=21
+import system 
+import time
+import threading
+def manualComplete():
+	shared.CompleteTU.CompleteTU()
+	shared.TUpkg.Send_tupkg()
+	system.tag.write('Path/TU/previous_completed',1)
+	shared.main.log('Spool manually completed')
+	system.tag.write('Path/instruction','Spool auto Completed')
+	system.tag.write('Path/TU/Next_TU_LCU',1) #added this to complete no matter what
+	system.tag.write('Path/TU/NextTU',1)
+	time.sleep(2)
+	system.tag.write('Path/TU/Next_TU_LCU',0) #added this to complete no matter what
+	system.tag.write('Path/TU/NextTU',0)
 	
-	#pf_tension and tu_tension  nominal setpoint values 
-	pf_ns = system.tag.read('Path/Calib/fProofTensionCalibMaxNs').value
-	tu_ns = system.tag.read('Path/Calib/fTensionCalibMaxNs').value
-	
-	#call of inTolerance function
-	if shared.main.inTolerance(pf_ns,5.0, pf_ten):
-		pf_st = "YES:" #tu status
-	else:
-		pf_st = "NO:"
-	print pf_ten
-		
-	if shared.main.inTolerance(tu_ns,5.0,tu_ten):
-		tu_st = "YES:" #tu status
-	else:
-		tu_st = "NO:"
-	print tu_ten
+	t=threading.timer(60, testFunc)
+	t.start()
 
-	mach_no = system.tag.read('Path/mach_no.value')
-	oper_id = system.tag.read('Path/oper_id').value.upper()
-	data= 'directive=calibrate_mach'	
-	data+= ';mach_no=' + str(system.tag.read('Path/mach_no').value) 
-	data+= ';oper_id=' + str(system.tag.read('Path/current_oper_id').value) 
-	data += ';calibrate_data=POLC:YES:0' + ':' #N/A for nextrom new mach
-	data+= ':TULC:' + str(tu_st) + str(tu_ten)  #eg: YES:-55.952:
-	data += ':PTLC:'+ str(pf_st) + str(pf_ten)
-	
-	try:
-		sendstring1 = shared.main.PTS_URL + svc + data #UNCOMMENT AFTER TESTING 
-		#sendstring1 = 'http://pts.ganor.ofsoptics.com/norcross/pts/rewind/svc/rewind_aux/rewind_aux.svc/process?inString=directive=calibrate_mach;mach_no=601;oper_id=277;calibrate_data=POLC:YES:-57.95:TULC:YES:-55.952:PTLC:YES:-63.467:'
-		shared.main.log(sendstring1)
-		print sendstring1
-		response = system.net.httpGet(sendstring1)
-		shared.main.log(response)
-		print response
+
 		
-		responsesp = response.split(':')
-		
-		system.tag.write('Path/instruction', responsesp[6])
-		
-	except:
-		
-		shared.main.log('Calibrate send error has occured')
-		print 'error'
-		
-	
-	#http://devpts.ganor.ofsoptics.com/norcross/pts/rewind/svc/rewind_aux/rewind_aux.svc/process?inString=directive=calibrate_mach;mach_no=601;oper_id=277;calibrate_data=POLC:YES:-57.95:TULC:YES:-55.952:PTLC:YES:-63.467:

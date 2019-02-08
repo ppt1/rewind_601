@@ -1,6 +1,6 @@
 #change log 
 
-#commit to master branch
+
 #1.22.18 error handling for cannot use regular id, enter rwrscrap
 
 ####################################################################################################
@@ -11,11 +11,20 @@ import traceback
 import time 
 import math 
 from time import strftime
+import threading 
 
 #example:
 #[2018.05.16 20:31:50] ! VBC INET send: http://pts.ganor.ofsoptics.com/norcross/pts/rewind/svc/setupTU/setupTU.svc/process?inString=mach_no=770:oper_id=328:rwr_id=GET_SPOOL_ID:rwr_serial_id=5220070639:sfo_final_color=NONE:;spoolRun=Single
 #[2018.05.16 20:31:51] ! VBC INET got: 770:328:SETUP:TU:RWR865623657:0:PAYSPL:38:TAkSPL:52:TAKLEN:0:CUTLEN:50800:PAYLEN:306902:PROOFTEST:100:CLMODE:NONE:COLOR:OR:TAKTEN:45:TAKPIT:0.5:PAYTEN:70:DIETEN:70:ISELEN:10:MAXSPEED:1500:PLANSEND:SALE:NO:INKTYPE:NONE:TWIST_V:0:TWIST:N:AIRLNTH:0:AIRDNSE:0:SEDGBGN:30.54:SEDGEND:175.56:no:BTLIMIT:15::
 #
+def timerDone():
+	#system.tag.write('Path/timerDone',1)
+	system.tag.write('Path/TEST/bool_test',1)
+	print 'timer done'
+	
+	
+
+
 system.tag.write("Path/TU/tu_danc_bar", 0.22)
 Setupsvc = 'setupTU/setupTU.svc/process?inString='#SETUP Svc 
 
@@ -65,13 +74,14 @@ def SetupTU():
 		postdata+= ':rwr_serial_id=' + str(tu_serID)
 		postdata+= ':sfo_final_color=' + 'NONE'
 		postdata+= ':;spoolRun=' + 'Single'
-		
+		###############################################################
+		#SEND TO PTS
 		try:
 			sendstring1= shared._1_Oper_Logon.SendURL(shared.main.PTS_URL, Setupsvc, postdata)
 			print sendstring1
 			shared.main.log(sendstring1)
 			#RESET TU_PLAN_AREA from previous completeTU instruction. Example: if instruction from previous completeTU is "RWRSCRP", reset it as soon as takeup
-			system.tag.write('Path/TU/tu_plan_area',"")			
+						
 		except:
 			shared.main.log(traceback.print_exc('sendstring1'))
 			
@@ -79,7 +89,8 @@ def SetupTU():
 	
 		
 		### PARSE RESPONSE
-		
+		#######################################################################
+		#RESPONSE FROM PTS
 		try:
 			time.sleep(1)
 			response1 = system.net.httpGet(sendstring1)
@@ -104,9 +115,10 @@ def SetupTU():
 				system.tag.write('Path/TU/CutLenSet_pts', float(response1sp[13]))
 				system.tag.write("Path/po_len_set", float(response1sp[15]))
 				
-				
+				#MADE THE PT POINT TO 105 TO ENSURE IT STAYS ABOVE 100. PPC 8/1/18, set to 30 for scrap
+						
 				if response1sp[17] =='0':
-					pfsetpoint = 30 #MADE THE PT POINT TO 105 TO ENSURE IT STAYS ABOVE 100. PPC 8/1/18, set to 30 for scrap
+					pfsetpoint = 30 		
 				else:
 					pfsetpoint = float(response1sp[17])+5
 					
@@ -134,8 +146,8 @@ def SetupTU():
 				system.tag.write("Path/meGranted", response1sp[51])
 				          #MUTLIPLE end granted?
 				system.tag.write("Path/instruction", 'TAKEUP SPOOL VALID')  
-				shared.main.log('TAKEUP SPOOL VALID')        #task assigned
-				
+				shared.main.log('TAKEUP SPOOL VALID')   
+
 				system.tag.write('Path/inEdge',10.0)
 				system.tag.write('Path/TU/tu_spool_accept','true')
 				time.sleep(1)
@@ -146,18 +158,45 @@ def SetupTU():
 				system.tag.write('Path/TU/prevent_newtu','true')
 
 
-				#RESET  tu spool_send area
-			system.tag.write('Path/TU/tu_send_area',"")
-			system.tag.write('Path/TU/tu_plan_area',"")
-
+				#RESET  tu spool_send area-only clear if the response back is 0
+				#system.tag.write('Path/TU/tu_send_area',"")
+				#system.tag.write('Path/TU/tu_plan_area',"")
+				#RESET PREVIOUS SPOOL data
+				tags= ["Path/TU/tu_ten_info","Path/pf_ten_info",'Path/stop_code','Path/spedge/spedge_val','Path/TU/tupkg_data']
+				values=['0','0','none','0','0']
+				system.tag.writeAll(tags,values)
+				
+								     #task assigned
+				#start timer here, if tu spool is valid and doesn't run after a set amount of time, notify the operator/coach/engrs
+				timeinSec = 10
+				timer = threading.Timer(timeinSec, timerDone)
+				timer.start()
+#				for i in range(1,timeinSec):
+#					i=i+1
+#					time.sleep(1)
+#					system.tag.write('Path/TEST/test_int',i)#to chck if timer is working
+#					
+#				
+				
+				#check to see if dancer is open and then complete the spool
+	
+			
 			else:
+			#if plan_send instruction from PO setup gets cleared out, and rwrscrap instruction is to be made, 
+			#set the next spool for rwrscrap
+				if response1sp[6] == 'Cannot use regular RWR id. Enter RWRSCRAP.':
+					system.tag.write('Path/TU/tu_plan_area','SCRP')
+					#system.tag.write('Path/TU/tu_fiberID','RWRSCRAP')
+				
+				if (response1sp[6] == 'Cannot use RWRSCRAP. Enter a regular RWR id.'):
+					system.tag.write('Path/TU/tu_plan_area','')
+				 
+				
 				system.tag.write('Path/instruction', 'Takeup Spool Rejected. '  + response1sp[6]) 
 				shared.main.log('Takeup Spool is Rejected. ' + response1sp[6])
 
 				#error handling for cannot use regular id, enter rwrscrap #ppc 1.22.19
 
-				if response1sp[6] == "Cannot use regular RWR id. Enter RWRSCRAP. :":
-					system.tag.write('Path/tu_plan_area','SCRP')
 
 
 				system.tag.write('Path/TU/tu_spool_reject','true')
@@ -238,7 +277,9 @@ def SetupTU():
 #            gInstruction$ = TokenArray(TOKENSTART% + 48)
 #            '''	
 #	
-#	
+def x():
+	timer = threading.Timer(5,shared.SetupTU.timerDone)
+	timer.start()
 #	
 #	
 	
