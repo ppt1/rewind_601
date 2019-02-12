@@ -11,20 +11,22 @@
 import system 
 import time
 import threading
-def manualComplete():
+def manualComplete(temp):
+	if temp == 'tubk' or 'pfbk' or 'pobk':
+		t = threading.Timer(10,shared.main.Send_Email('fiberBreak'))
+		t.start()
 	shared.CompleteTU.CompleteTU()
 	shared.TUpkg.Send_tupkg()
 	system.tag.write('Path/TU/previous_completed',1)
-	shared.main.log('Spool manually completed')
-	system.tag.write('Path/instruction','Spool auto Completed')
-	system.tag.write('Path/TU/Next_TU_LCU',1) #added this to complete no matter what
-	system.tag.write('Path/TU/NextTU',1)
-	time.sleep(2)
-	system.tag.write('Path/TU/Next_TU_LCU',0) #added this to complete no matter what
-	system.tag.write('Path/TU/NextTU',0)
+	if temp == 'auto':
+		shared.main.log('Spool auto completed')
+	else:
+		shared.main.log('Spool manually completed')
+	system.tag.write('Path/instruction','Spool Completed')
+#	system.tag.write('Path/TU/Next_TU_LCU',1) #added this to complete no matter what
+#	system.tag.write('Path/TU/NextTU',1)
+#	time.sleep(1.5)
+#	system.tag.write('Path/TU/Next_TU_LCU',0) #added this to complete no matter what
+#	system.tag.write('Path/TU/NextTU',0)
 	
-	t=threading.timer(60, testFunc)
-	t.start()
 
-
-		
