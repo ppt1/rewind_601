@@ -49,4 +49,21 @@ def Calibrate(): #check calibration
 		print 'error'
 		
 	
+
+
+
+def testCalibrate():
+	import system
+
+	sendstring1 = 'http://pts.ganor.ofsoptics.com/norcross/pts/rewind/svc/rewind_aux/rewind_aux.svc/process?inString=directive=calibrate_mach;mach_no=601;oper_id=277;calibrate_data=POLC:YES:-57.95:TULC:YES:-55.952:PTLC:YES:-63.467:'
+	
+	print sendstring1
+	response = system.net.httpGet(sendstring1)
+	
+	print response
+	
+	responsesp = response.split(':')
+	shared.main.log(response)
+	system.tag.write('Path/instruction', responsesp[6])#+responsesp[6])
+
 	#http://devpts.ganor.ofsoptics.com/norcross/pts/rewind/svc/rewind_aux/rewind_aux.svc/process?inString=directive=calibrate_mach;mach_no=601;oper_id=277;calibrate_data=POLC:YES:-57.95:TULC:YES:-55.952:PTLC:YES:-63.467:

@@ -1,4 +1,3 @@
-#operLogon
 import system 
 import time
 import math
@@ -38,7 +37,7 @@ def Logon():
 		if len(system.tag.read("Path/oper_id").value) == 5:
 			oper_pw = "BadgeNb"
 		else:
-			oper_pw = system.tag.read("Path/oper_password") #'BadgeNb'
+			oper_pw = system.tag.read("Path/oper_password").value #'BadgeNb'
 	#layout_id = "XXX"
 	#layout_passwd = "XXXXXX"
 	
@@ -205,7 +204,7 @@ def Logon():
 #	CutLenSet_pts = stateRessp[31]        #Cut Length set pts 
 #	PAYLEN = stateRessp[32]        #key 
 #	payLenSet = stateRessp[33]        #value 
-#	PROOFTEST = stateRessp[34]        #pROOFtESTsET POINT_PTS KEY â€¦. > 35 "PROOFTEST" ELSE "REWIND" 
+#	PROOFTEST = stateRessp[34]        #pROOFtESTsET POINT_PTS KEY …. > 35 "PROOFTEST" ELSE "REWIND" 
 #	Pfsetpoint_pts = stateRessp[35]        # 
 #	CLMODE  = stateRessp[36]        #key color mode
 #	colormode_pts = stateRessp[37]        #value 

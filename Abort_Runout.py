@@ -89,9 +89,7 @@ def func(select):
 #		system.tag.write('Path/po_removeID',0)
 		
 		#if there is not a 0 code. 0 = good, 4 = error
-		
-
-		if responsesp[5] != '0' and response_size > 6:
+		if responsesp[5] != '0' and response_size > 5:
 			
 			if responsesp[6] == 'Invalid password or layout id. ' or 'Failed to get layout id.': #'Invalid password or layout id. ':
 				system.gui.messageBox(responsesp[6])
@@ -102,16 +100,17 @@ def func(select):
 	
 		
 		else:
-
-				system.gui.messageBox(responsesp[6])
+				
 				system.tag.write('Path/po_removeID',1)
 				system.tag.write('Path/TU/nextID', '')
 				system.tag.write('Path/TU/CutLenSet_pts', '')
 				system.tag.write('Path/TU/tu_plan_area', '')
 				system.tag.write('Path/po_len_set', '')
 				system.tag.write('Path/po_serID_hidden', '')
+				system.tag.write('Path/TU/tu_plan_area','')
 				time.sleep(1)
 				system.tag.write('Path/po_removeID',0)
+				system.gui.messageBox(responsesp[6])
 
 	except:
 		shared.main.log(traceback.format_exc())

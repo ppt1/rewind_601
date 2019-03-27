@@ -1,7 +1,5 @@
-#######################################################
-#GENERAL MACH VALUES 
-#######################################################
 import time 
+import system
 
 
 
@@ -44,7 +42,7 @@ print filename
 ##################################################
 #ileName = filePath.split("\\")[-1]
 
-def Send_Email('temp'):
+def Send_Email(temp):
 
 	#fileData = fpmi.file.readFileAsBytes(filePath)
 	if temp == 'TU_Rejects':
@@ -73,12 +71,11 @@ def writeToFile(text):
 	out.write(line)    
 	out.close()
 	  
-y=""
-
+y= "" 
 def log(x):
-			
-	shared.main.y = shared.main.y + (strftime("[%Y.%m.%d   %H:%M:%S]")) + " " +x +"\n"    
-	system.tag.write('displayMsg',shared.main.y)
+	y=""	
+	y = y + (strftime("[%Y.%m.%d   %H:%M:%S]")) + " " +x +"\n"    
+	system.tag.write('displayMsg',y)
 	writeToFile(x)
 	return x
 
