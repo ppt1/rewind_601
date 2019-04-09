@@ -19,7 +19,7 @@ import threading
 #
 def timerDone():
 	#system.tag.write('Path/timerDone',1)
-	system.tag.write('Path/TEST/bool_test',1)
+	system.tag.write('Path/TEST/bool_test',True)
 	print 'timer done'
 	
 	
@@ -162,15 +162,15 @@ def SetupTU():
 				#system.tag.write('Path/TU/tu_send_area',"")
 				#system.tag.write('Path/TU/tu_plan_area',"")
 				#RESET PREVIOUS SPOOL data
-				tags= ["Path/TU/tu_ten_info","Path/pf_ten_info",'Path/stop_code','Path/spedge/spedge_val','Path/TU/tupkg_data']
-				values=['0','0','none','0','0']
+				tags= ["Path/TU/tu_ten_info","Path/pf_ten_info",'Path/stop_code','Path/spedge/spedge_val','Path/TU/tupkg_data','Path/Spedge/spedge_val']
+				values=['0','0','none','0','0',0]
 				system.tag.writeAll(tags,values)
 				
 								     #task assigned
 				#start timer here, if tu spool is valid and doesn't run after a set amount of time, notify the operator/coach/engrs
-				timeinSec = 10
-				timer = threading.Timer(timeinSec, timerDone)
-				timer.start()
+#				timeinSec = 400
+#				timer = threading.Timer(timeinSec, shared.main.Send_Email('mach_stalled'))
+#				timer.start()
 #				for i in range(1,timeinSec):
 #					i=i+1
 #					time.sleep(1)
@@ -184,11 +184,11 @@ def SetupTU():
 			else:
 			#if plan_send instruction from PO setup gets cleared out, and rwrscrap instruction is to be made, 
 			#set the next spool for rwrscrap
-				if response1sp[6] == 'Cannot use regular RWR id. Enter RWRSCRAP.':
+				if response1sp[6] == 'Cannot use regular RWR id. Enter RWRSCRAP. ':
 					system.tag.write('Path/TU/tu_plan_area','SCRP')
 					#system.tag.write('Path/TU/tu_fiberID','RWRSCRAP')
 				
-				if (response1sp[6] == 'Cannot use RWRSCRAP. Enter a regular RWR id.'):
+				elif (response1sp[6] == 'Cannot use RWRSCRAP. Enter a regular RWR id.'):
 					system.tag.write('Path/TU/tu_plan_area','')
 				 
 				

@@ -1,5 +1,7 @@
+#######################################################
+#GENERAL MACH VALUES 
+#######################################################
 import time 
-import system
 
 
 
@@ -47,15 +49,21 @@ def Send_Email(temp):
 	#fileData = fpmi.file.readFileAsBytes(filePath)
 	if temp == 'TU_Rejects':
 		subject = 'Multiple Takeup Spool Rejects' #reason code for the issue and send email for the take up spools rejected
-		body = subject + system.tag.read('Path/instruction').value
-
-	#if temp == ''
+		body = system.tag.read('Path/instruction').value
+	elif (temp == 'fiberBreak') and (system.tag.read('Path/mach_running').value==0):
+		subject = 'Fiber Break. Attention Required.'
+		body =   'Fiber break occured on '+ str(system.tag.read('Path/mach_no').value)+'.'#str(system.tag.read('Path/stop_code').value)
+	elif temp == 'tapingFail':
+		subject = '601 Attention Required'
+		body = 'Auto-taping Failed, Operator attention required.'
+	elif temp == 'mach_idle':
+		subject = '601 Machine idle'
+		body = 'Machine has been idle for over 25 minutes, Operator attention required. Active PO ' + str(system.tag.read('Path/po_fiberID').value)
 
 	smtp = "mail.ofsoptics.com"
 	sender = "REW601@OFS"
-#	subject = 'User Input requested at 601'
-#	body = "Hello, this is a TEST email"
-	recipients = ["jheim@ofsoptics.com","pcharles@ofsoptics.com",'jmunz@ofsoptics.com']
+	#recipients = ["pcharles@ofsoptics.com"]
+	recipients = ["jheim@ofsoptics.com","pcharles@ofsoptics.com",'jmunz@ofsoptics.com','dbalfour@ofsoptics.com','twilliamson@ofsoptics.com','rflores@ofsoptics.com']
 	system.net.sendEmail(smtp, sender, subject, body, 0, recipients)#, [fileName], [fileData])	
 #Function to display log on the root container 
 
@@ -71,11 +79,12 @@ def writeToFile(text):
 	out.write(line)    
 	out.close()
 	  
-y= "" 
+y=""
+
 def log(x):
-	y=""	
-	y = y + (strftime("[%Y.%m.%d   %H:%M:%S]")) + " " +x +"\n"    
-	system.tag.write('displayMsg',y)
+			
+	shared.main.y = shared.main.y + (strftime("[%Y.%m.%d   %H:%M:%S]")) + " " +x +"\n"    
+	system.tag.write('displayMsg',shared.main.y)
 	writeToFile(x)
 	return x
 
@@ -135,22 +144,31 @@ def toggle(tagPath): #toggle values. make flags momentary
 #STOP CODE 
 ########################################################
 def Stop_code():
-			
-			if system.tag.read('Path/STCT').value == 1:
-				code= 'STCT'
-				print 'stct'
-			elif (system.tag.read('Path/TUBK').value and system.tag.read('Path/PFBK').value ==1) or (system.tag.read('Path/TUBK').value == 1):
+
+				
+			if (system.tag.read('Path/TUBK').value)==1:# and system.tag.read('Path/PFBK').value ==1) or (system.tag.read('Path/TUBK').value == 1):
 				code = 'TUBK'
 				print 'TUBK'
 			elif system.tag.read('Path/PFBK').value == 1:
 				code = 'PFBK'
 				print 'pfbk'
+				shared.main.log('PFBK occured')
+				system.tag.write('Path/instruction', 'PFBK')
+			elif system.tag.read('Path/STCT').value == 1:
+				code= 'STCT'
+				print 'stct'
 			elif system.tag.read('Path/bPOBK').value == 1:
 				code = 'POBK'
 				print 'pobk'
 				
 			else:
 				code = 'PFBK'
+				
+			if system.tag.read('Path/TU/take_len').value < 5: #added on 2/25/19 PPC ; OPLN = auto tapingFailure
+				code = 'OPLN'
+				shared.main.log('Auto taping Failure occured')
+			
+			
 			return code
 			
 ########################################################
@@ -186,9 +204,10 @@ def ackDancer():
 		shared.main.log('Dancer Fault acknowledged. Ready for the Next TU spool') 
 		
 def Fiber_Break():
-
-	shared.main.Stop_code()	
+		
+	shared.main.Stop_code()
 	shared.CompleteTU.CompleteTU()
+	
 	shared.TUpkg.Send_tupkg()
 	system.tag.write('Path/mach_start_after_taping',0)
 

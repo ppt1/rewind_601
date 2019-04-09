@@ -7,7 +7,6 @@ import time
 
 
 def mach_start(): #machine start
-#this function is called in db.py line 69
 	svc = 'rewind_aux/rewind_aux.svc/process?inString='
 
 	
@@ -45,22 +44,24 @@ def mach_stop():
 	
 #[2018.05.24 13:11:08] ! VBC INET send: http://pts.ganor.ofsoptics.com/norcross/pts/rewind/svc/rewind_aux/rewind_aux.svc/process?inString=directive=mach_stop;stop_reason=STCT;stop_length=50723;mach_no=770;oper_id=334
 #[2018.05.24 13:11:08] ! VBC INET got: 770:334:RWD:AUX:mach_stop:0:
-
+	time.sleep(0.5)
 	svc = 'rewind_aux/rewind_aux.svc/process?inString='
 	data = 'directive=mach_stop'
 	stop_length =  str(system.tag.read('Path/TU/take_len').value)
 	stop_code = shared.main.Stop_code() 
-		
+	shared.main.log(stop_code)
+	system.tag.write('Path/stop_code',stop_code)	
+	
 	data+= ';stop_reason=' + stop_code#stop_reason
 	data+= ';stop_length=' + stop_length
-	data+= ';mach_no=' + str(shared.main.mach_no.value)
+	data+= ';mach_no=' + '601'
 	data+= ';oper_id=' + str(system.tag.read('Path/current_operid').value)
 	
-	#system.tag.write('Path/mach_start_after_taping',0) at stop at CompleteTU Event
-
+	#if tapingDone == True:
 	sendstring1 = shared.main.PTS_URL + svc + data
 	print sendstring1 
 	shared.main.log(sendstring1)
+	
 	response1 = system.net.httpGet(sendstring1)
 	print response1	
 	shared.main.log(response1)
